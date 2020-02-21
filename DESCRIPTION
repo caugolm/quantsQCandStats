@@ -1,0 +1,10 @@
+Package: quantsQCandStats
+Title: QuANTs QC and basic stats tools
+Description: Assumes data in long format organized like QuANTs with other variables merged to it. Useful for group comparisons and regression analysis. 
+Version: 0.1
+Author: person("Christopher", "Olm", email = "caugolm@gmail.com", role = c("aut", "cre"))
+Maintainer: Christopher Olm <caugolm@gmail.com>
+Depends: 
+License: donno
+LazyData: true
+RoxygenNote: 7.0.2
