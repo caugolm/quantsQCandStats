@@ -3,3 +3,4 @@
 export(bark)
 export(getStats)
 export(outlierDetection)
+import(ggplot2)

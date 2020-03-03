@@ -8,3 +8,4 @@ Depends:
 License: donno
 LazyData: true
 RoxygenNote: 7.0.2
+Imports: ggplot2

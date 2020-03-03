@@ -7,6 +7,7 @@
 #' @param covarOfInterest A column name you want to use as a covariate in your linear model. Will also be used for plotting.
 #' @param otherCovarString A string you want to use for covariates of no interest. Won't be used for plots. For multiple values, use lm()-style formula "Covar1+Covar2+..." 
 #' @param lut A look up table with label numbers in the first column and label names in the second column. Can have extra rows or columns, they will be ignored 
+#' @param colorMat A table of colors that might get used in plots
 #' @param sigValue A value used for thresholding your statistics. If you want to show all data use 1.
 #' @param multipleCorrectionMethod Goes into p.adjust() to account for multiple comparisons. Will do this accounting for all labels in your input df. Default is none, common other choices are "bonferroni" and "fdr"
 #' @param outFileRoot Optional file root for output. If specified, will save 1) .txt file with all significant results and 2) plots for up to 5 labels (with 5 smallest p-values)
@@ -18,16 +19,27 @@
 #' 
 
 
-getStats <- function (df, varOfInterest, covarOfInterest, otherCovarString, lut, sigValue, multipleCorrectionMethod, outFileRoot)  {
+getStats <- function (df, varOfInterest, covarOfInterest, otherCovarString, lut, colorMat, sigValue, multipleCorrectionMethod, outFileRoot)  {
   # we might want multiple corrections, but we might not. 
   if (missing(multipleCorrectionMethod)) {
     multipleCorrectionMethod <- "none"
+  }
+  # if no significant value threshold input, keep all stats
+  if(missing(sigValue)) {
+    print("i see everything")
+    sigValue <- 1
+  }
+  # if no palatte supplied, do something 
+  if (missing(colorMat)) {
+    stop("need colors")
   }
   
   # check for look up table / create dummy one 
   if (missing(lut)) {
     print("No look up table, wingin' it")
     lut <- rbind(unique(df$label), paste("label",unique(df$label), sep=""))
+    lut <- t(lut)
+    lut[,1] <- as.double(lut[,1])
   }
   
   # get rid of extra factor levels if i'm lazily filtering
@@ -95,6 +107,8 @@ getStats <- function (df, varOfInterest, covarOfInterest, otherCovarString, lut,
     # write output in format for the lausanneTableToFigure.sh script
     outRoot <- paste(outFileRoot, "_", multipleCorrectionMethod, sigValue, sep="")
     write.table(sigResults,paste(outRoot,".txt", sep=""), quote = F, row.names = F, col.names=F)
+  } else {
+    outFileRoot <- paste(varOfInterest)
   }
   
   # create a flexible (list) object to store all of the significant plots
@@ -112,31 +126,38 @@ getStats <- function (df, varOfInterest, covarOfInterest, otherCovarString, lut,
         # if our variable of interest is an integer or double or numeric, make a scatterplot, 
         # but if it's a factor or character then make a boxplot 
         if ( (class(df[,varOfInterest]) == "integer" | class(df[,varOfInterest]) == "double" | class(df[,varOfInterest]) == "numeric" ) ) {
-          sigPlots[[s]] <- ggplot(df[df$label == loi ,], aes(x= !!ggvarOfInterest, y=value)) + geom_point() + geom_smooth(method = "lm") + ggtitle(paste(outFileRoot, lut[lut[,1] == loi,2]))
+          sigPlots[[s]] <- ggplot(df[df$label == loi ,], aes(x= !!ggvarOfInterest, y=value)) + geom_point() + geom_smooth(method = "lm") + ggtitle(paste(lut[lut[,1] == loi,2]))
         } else {
-          sigPlots[[s]] <- ggplot(df[df$label==loi ,], aes(x= !!ggvarOfInterest, y=value, fill=!!ggvarOfInterest)) + geom_boxplot() + geom_jitter(height = 0, width = .3) + scale_fill_manual(values=mutPal) + ggtitle(paste(outFileRoot, lut[lut[,1] == loi,2]))
+          sigPlots[[s]] <- ggplot(df[df$label==loi ,], aes(x= !!ggvarOfInterest, y=value, fill=!!ggvarOfInterest)) + geom_boxplot() + geom_jitter(height = 0, width = .3) + scale_fill_manual(values=colorMat) + ggtitle(paste(lut[lut[,1] == loi,2]))
         }
         # if we have our main effect and a covariate, we have a bunch of options, but in essense if it's a factor make it a color and plot the x-axis with the numeric one, but if there's two numberic ones color by the covariate and plot on the main variable
       } else {
         ggcovarOfInterest <- ensym(covarOfInterest)
         if ( (class(df[,varOfInterest]) == "factor" | class(df[,varOfInterest]) == "character") & (class(df[,covarOfInterest]) == "integer" | class(df[,covarOfInterest]) == "double" | class(df[,varOfInterest]) == "numeric") ) {
-          sigPlots[[s]] <- ggplot(df[df$label==loi ,], aes(x= !!ggcovarOfInterest, y=value, color= !!ggvarOfInterest)) + geom_point() + geom_smooth(method = "lm") + scale_color_manual(values=mutPal) + ggtitle(paste(outFileRoot, lut[lut[,1] == loi,2]))
+          sigPlots[[s]] <- ggplot(df[df$label==loi ,], aes(x= !!ggcovarOfInterest, y=value, color= !!ggvarOfInterest)) + geom_point() + geom_smooth(method = "lm") + scale_color_manual(values=colorMat) + ggtitle(paste(lut[lut[,1] == loi,2]))
         } else if ( (class(df[,varOfInterest]) == "factor" | class(df[,varOfInterest]) == "character") & (class(df[,covarOfInterest]) == "factor" | class(df[,covarOfInterest]) == "character") ) {
-          sigPlots[[s]] <- ggplot(df[df$label==loi ,], aes(x= !!ggvarOfInterest, y=value, fill= !!ggcovarOfInterest)) + geom_boxplot() + geom_jitter(height = 0, width = .3) + ggtitle(paste(outFileRoot, lut[lut[,1] == loi,2]))
+          sigPlots[[s]] <- ggplot(df[df$label==loi ,], aes(x= !!ggvarOfInterest, y=value, fill= !!ggcovarOfInterest)) + geom_boxplot() + geom_jitter(height = 0, width = .3) + ggtitle(paste(lut[lut[,1] == loi,2]))
         } else if ( (class(df[,varOfInterest]) == "integer" | class(df[,varOfInterest]) == "double" | class(df[,varOfInterest]) == "numeric") & (class(df[,covarOfInterest]) == "factor" | class(df[,covarOfInterest]) == "character") ) {
-          sigPlots[[s]] <- ggplot(df[df$label==loi ,], aes(x= !!ggvarOfInterest, y=value, color= !!ggcovarOfInterest)) + geom_point() + geom_smooth(method = "lm") + ggtitle(paste(outFileRoot, lut[lut[,1] == loi,2]))
+          sigPlots[[s]] <- ggplot(df[df$label==loi ,], aes(x= !!ggvarOfInterest, y=value, color= !!ggcovarOfInterest)) + geom_point() + geom_smooth(method = "lm") + ggtitle(paste(lut[lut[,1] == loi,2]))
         } else {
-          sigPlots[[s]] <- ggplot(df[df$label==loi ,], aes(x= !!ggvarOfInterest, y=value, color= !!ggcovarOfInterest)) + geom_point() + geom_smooth(method = "lm") + ggtitle(paste(outFileRoot, lut[lut[,1] == loi,2]))
+          sigPlots[[s]] <- ggplot(df[df$label==loi ,], aes(x= !!ggvarOfInterest, y=value, color= !!ggcovarOfInterest)) + geom_point() + geom_smooth(method = "lm") + ggtitle(paste(lut[lut[,1] == loi,2]))
         }
       }
-      numPlots <- dim(sigResults)[2]
-      if (!missing(outFileRoot)) {
-        # write output in format for the lausanneTableToFigure.sh script
-        if (numPlots > 6) {
-          numPlots <- 5
-        }
-        gridplots <- grid.arrange(sigPlots[1:numPlots])
-        ggsave(paste(outRoot, "sig", numPlots, ".png", sep="") ,gridplots )
+    
+    }
+    numPlots <- 0
+    numPlots <- dim(sigResults)[1]
+    if (exists("outRoot")) {
+      if (numPlots == 1 ) {
+        ggsave(paste(outRoot, "sig", numPlots, ".png", sep=""), arrangeGrob(grobs = sigPlots[1]))
+      } else if (numPlots >= 4) {
+      # write output in format for the lausanneTableToFigure.sh script
+        numPlots <- 4
+        gridplots <- arrangeGrob(grobs = sigPlots[1:numPlots])
+        ggsave(paste(outRoot, "sig", numPlots, ".png", sep=""), gridplots)
+      } else if (numPlots > 1 & numPlots < 4) {
+        gridplots <- arrangeGrob(grobs = sigPlots[1:numPlots])
+        ggsave(paste(outRoot, "sig", numPlots, ".png", sep=""), gridplots)
       }
     }
   }
@@ -145,6 +166,6 @@ getStats <- function (df, varOfInterest, covarOfInterest, otherCovarString, lut,
   outlist[[1]] <- sigResults
   outlist[[2]] <- statslist
   outlist[[3]] <- sigPlots
-  names(outlist) <- c("significantResults", "allRegionsStats")
+  names(outlist) <- c("significantResults", "allRegionsStats","significantPlots")
   return(outlist)
 }
