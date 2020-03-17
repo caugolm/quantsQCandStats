@@ -17,7 +17,10 @@
 #'     3) a plot for each region in your df 1) (ie, one plot for each significant label)
 #' @export
 #' 
-
+if (!require(ggplot2)) install.packages('ggplot2')
+library(ggplot2)
+if (!require(gridExtra)) install.packages('gridExtra')
+library(gridExtra)
 
 getStats <- function (df, varOfInterest, covarOfInterest, otherCovarString, lut, colorMat, sigValue, multipleCorrectionMethod, outFileRoot)  {
   # we might want multiple corrections, but we might not. 
