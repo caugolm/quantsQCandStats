@@ -10,12 +10,9 @@
 #'     1) a df containing significant labels from the lm()
 #'     2) summay(lm()) output from each label in your input df 
 #'     3) a plot for each region in your df 1) (ie, one plot for each significant label)
+#' @import broom
 #' @export
-#' 
 
-# lazy
-if (!require(broom)) install.packages('broom')
-library(broom)
 
 
 runLms <- function (df, regressionString, lut)  {

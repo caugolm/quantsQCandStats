@@ -4,8 +4,14 @@ Description: Assumes data in long format organized like QuANTs with other variab
 Version: 0.1
 Author: person("Christopher", "Olm", email = "caugolm@gmail.com", role = c("aut", "cre"))
 Maintainer: Christopher Olm <caugolm@gmail.com>
-Depends: 
+Depends: ggplot2
 License: donno
 LazyData: true
 RoxygenNote: 7.0.2
-Imports: ggplot2
+Imports: 
+      ggplot2,
+      gridExtra,
+      broom,
+      RColorBrewer
+Encoding: UTF-8
+

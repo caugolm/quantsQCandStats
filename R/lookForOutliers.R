@@ -5,8 +5,9 @@
 #' @param groupVar Column name you want to group outliers by (common uses: label, ID, and/or MRIDate)  
 #' @return A list object with object "histogram" which displays a histogram of all included data, with the outliers highlighted
 #'     Also returns a dataframe with the number of outliers per value specified in groupVar
+#' @import ggplot2
 #' @export
-#' 
+
 outlierDetection <- function(df, sigmas, groupVar){
     # returns a list object containing a figure and 
     # an object containing subject id as names with the number of values they have outside of input sigmas from the mean 

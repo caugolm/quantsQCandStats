@@ -9,6 +9,7 @@
 #' @param x what you want on your x-axis. If it's a factor or character, this makes a boxplot. If it's a numeric, double, or integer, it's a scatterplot.
 #' @param y what you want on your y-axis. Almost certainly "value" or "resid" 
 #' @param interactionPlot (logical) are you plotting an interaction effect? Should only be used when considering an interaction effect statistically. Default FALSE 
+#' @param boxOrScatter "box" or "scatter" depending on how you want to visualize your data
 #' @param colorCol what you want to color by
 #' @param colorMat (optional) table of colors that might get used in plots. If used, might fight with colorCol. I need to practice
 #' @param sigValue value used for thresholding your statistics. If you want to show all data use 1 (default).
@@ -16,44 +17,42 @@
 #' @param outFileRoot (optional) Not implemented. file root for output. If specified, will save 1) .txt file with all significant results and 2) plots for up to 5 labels (with 5 smallest p-values)
 #' @return A list object with elements 
 #'     1) a plot for each significant region per your specifications
+#' @import ggplot2
+#' @importFrom RColorBrewer brewer.pal
 #' @export
-#' 
-#' 
-#' 
-if (!require(dplyr)) install.packages('dplyr')
-library(dplyr)
-if (!require(ggplot2)) install.packages('ggplot2')
-library(ggplot2)
-if (!require(gridExtra)) install.packages('gridExtra')
-library(gridExtra)
-if (!require(RColorBrewer)) install.packages('RColorBrewer')
-library(RColorBrewer)
 
-runLmsPlots <- function (plotList, termToPlot, x, y, interactionPlot = FALSE, colorCol, colorMat = NULL, sigValue = 1, multipleCorrectionMethod = "none", outFileRoot = NULL) {
+runLmsPlots <- function (plotList, termToPlot, x, y, interactionPlot = FALSE, boxOrScatter = "box", colorCol, colorMat = NULL, sigValue = 1, multipleCorrectionMethod = "none", outFileRoot = NULL) {
   statsmat <- plotList[[1]]
   df <- plotList[[2]]
   
-  # y needs to be a number type for now
-  dttmp <- unlist(select(df, y))
-  ytype <- typeof(dttmp) 
-  if (ytype != "numeric" & ytype != "double" & ytype != "integer") { 
-    stop("y must be a numeric, double, or integer") 
-  }
-  
-  # i'm sure this will end up edited
-  dttmp <- unlist(select(df, x))
-  xtype <- typeof(dttmp) 
-  if (xtype == "numeric" | xtype == "double" | xtype == "integer") { 
-    plottype <- "scatter"
-  } else {
-    plottype <- "box"
-  }
+ #  # y needs to be a number type for now
+ #  dttmp <- unlist(select(df, y))
+ #  ytype <- typeof(dttmp) 
+ #  if (ytype != "numeric" & ytype != "double" & ytype != "integer") { 
+ #    stop("y must be a numeric, double, or integer") 
+ #  }
+ #  
+ #  # i'm sure this will end up edited
+ #  dxtmp <- unlist(select(df, x))
+ #  xtype <- typeof(dxtmp) 
+ # # print(xtype)
+ #  if (xtype == "numeric" | xtype == "double" | xtype == "integer") { 
+ #    plottype <- "scatter"
+ #  } else {
+ #    plottype <- "box"
+ #  }
 
+    if (boxOrScatter == "scatter") { 
+      plottype <- "scatter"
+    } else {
+      plottype <- "box"
+    }
+  
   # make a default color mat for plotting
   if (is.null(colorMat)) { 
     numColors <- dim(unique(select(df, colorCol)))[1]
     print(numColors)
-    colorMat <- brewer.pal(numColors, "Set1")
+    colorMat <- RColorBrewer::brewer.pal(numColors, "Set1")
   }
   
   # threshold your DF by whatever term specified 
@@ -72,11 +71,13 @@ runLmsPlots <- function (plotList, termToPlot, x, y, interactionPlot = FALSE, co
   sigdf <- filter(df, label %in% sigstats$label)
   
   if(dim(sigdf)[1] == 0 ) { 
-    stop("Sorry, nothing significant!")
+    stop("Nothing significant!")
   }
   
   allThePlots <- list()
+  print(y)
   yy <- ensym(y)
+  print(yy)
   xx <- ensym(x)
   cc <- ensym(colorCol)
   if ( plottype == "scatter"){ 
@@ -84,7 +85,7 @@ runLmsPlots <- function (plotList, termToPlot, x, y, interactionPlot = FALSE, co
       lbl <- sigstats$label[i]
       lblname <- sigstats$Label.Names[i]
       if (interactionPlot == TRUE ) { 
-        p <- ggplot(sigdf[sigdf$label == lbl , ], aes(x = !!xx, y = !!yy, color = !!cc)) + geom_point() + ggtitle(lblname) + scale_color_manual(values=colorMat) + geom_smooth(method="lm")
+        p <- ggplot(sigdf[sigdf$label == lbl , ], aes(x = x, y = y, color = !!cc)) + geom_point() # + ggtitle(lblname) + scale_color_manual(values=colorMat) + geom_smooth(method="lm")
       } else {
         p <- ggplot(sigdf[sigdf$label == lbl , ], aes(x = !!xx, y = !!yy, color = !!cc)) + geom_point() + ggtitle(lblname) + scale_color_manual(values=colorMat) + geom_smooth(method="lm" ,aes(group=1))
       }
@@ -92,9 +93,13 @@ runLmsPlots <- function (plotList, termToPlot, x, y, interactionPlot = FALSE, co
     }
   } else {
     for (i in 1:length(sigstats$label)) {
+      print("trying boxplots")
+      print(typeof(sigdf))
+      print(xx)
+      print(yy)
       lbl <- sigstats$label[i]
       lblname <- sigstats$Label.Names[i]
-      p <- ggplot(sigdf[sigdf$label == lbl , ], aes(x = !!xx, y = !!yy, fill = !!cc)) + geom_boxplot() + geom_jitter(height=0, width = .25) + ggtitle(lblname) + scale_fill_manual(values=colorMat)
+      p <- ggplot(sigdf[sigdf$label == lbl , ], aes(x = x, y = !!yy, fill = !!cc)) + geom_boxplot() + geom_jitter(height=0, width = .15) + ggtitle(lblname) + scale_fill_manual(values=colorMat)
       allThePlots[[i]] <- p
     } 
   }
