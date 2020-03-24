@@ -23,6 +23,9 @@
 
 
 testgetStats <- function (df, varOfInterest, covarOfInterest, otherCovarString, statsTermOfInterest, lut, colorMat, sigValue, multipleCorrectionMethod, outFileRoot)  {
+  if (missing(df)) {
+    stop("runs a bunch of stats on labels and makes some figures")
+  }
   # we might want multiple corrections, but we might not. 
   if (missing(multipleCorrectionMethod)) {
     multipleCorrectionMethod <- "none"
