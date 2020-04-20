@@ -140,7 +140,7 @@ getStats <- function (df, varOfInterest, covarOfInterest, otherCovarString, lut,
         # if we have our main effect and a covariate, we have a bunch of options, but in essense if it's a factor make it a color and plot the x-axis with the numeric one, but if there's two numberic ones color by the covariate and plot on the main variable
       } else {
         ggcovarOfInterest <- ensym(covarOfInterest)
-        if ( (class(df[,varOfInterest]) == "factor" | class(df[,varOfInterest]) == "character") & (class(df[,covarOfInterest]) == "integer" | class(df[,covarOfInterest]) == "double" | class(df[,varOfInterest]) == "numeric") ) {
+        if ( (class(df[,varOfInterest]) == "factor" | class(df[,varOfInterest]) == "character") & (class(df[,covarOfInterest]) == "integer" | class(df[,covarOfInterest]) == "double" | class(df[,covarOfInterest]) == "numeric") ) {
           sigPlots[[s]] <- ggplot(df[df$label==loi ,], aes(x= !!ggcovarOfInterest, y=value, color= !!ggvarOfInterest)) + geom_point() + geom_smooth(method = "lm") + scale_color_manual(values=colorMat) + ggtitle(paste(lut[lut[,1] == loi,2]))
         } else if ( (class(df[,varOfInterest]) == "factor" | class(df[,varOfInterest]) == "character") & (class(df[,covarOfInterest]) == "factor" | class(df[,covarOfInterest]) == "character") ) {
           sigPlots[[s]] <- ggplot(df[df$label==loi ,], aes(x= !!ggvarOfInterest, y=value, fill= !!ggcovarOfInterest)) + geom_boxplot() + geom_jitter(height = 0, width = .3) + ggtitle(paste(lut[lut[,1] == loi,2]))
