@@ -11,6 +11,7 @@
 #' @param colorMat A table of colors that might get used in plots
 #' @param sigValue A value used for thresholding your statistics. If you want to show all data use 1.
 #' @param multipleCorrectionMethod Goes into p.adjust() to account for multiple comparisons. Will do this accounting for all labels in your input df. Default is none, common other choices are "bonferroni" and "fdr"
+#' @param numberSavedPlots how many plots to save individually. If specifying number greater than the number of significant regions, it will stop after the last one
 #' @param outFileRoot Optional file root for output. If specified, will save 1) .txt file with all significant results and 2) plots for up to 5 labels (with 5 smallest p-values)
 #' @return A list object with 3 elements 
 #'     1) a df containing significant labels from the lm()
@@ -22,7 +23,7 @@
 #' @export
 
 
-testgetStats <- function (df, varOfInterest, covarOfInterest, otherCovarString, statsTermOfInterest, lut, colorMat, sigValue, multipleCorrectionMethod, outFileRoot)  {
+testgetStats <- function (df, varOfInterest, covarOfInterest, otherCovarString, statsTermOfInterest, lut, colorMat, sigValue, multipleCorrectionMethod, numberSavedPlots, outFileRoot)  {
   if (missing(df)) {
     stop("runs a bunch of stats on labels and makes some figures")
   }
@@ -172,6 +173,14 @@ testgetStats <- function (df, varOfInterest, covarOfInterest, otherCovarString, 
       } else if (numPlots > 1 & numPlots < 4) {
         gridplots <- gridExtra::arrangeGrob(grobs = sigPlots[1:numPlots])
         ggplot2::ggsave(paste(outRoot, "sig", numPlots, ".png", sep=""), gridplots)
+      }
+      if (!missing(numberSavedPlots)) {
+        if (numberSavedPlots > dim(sigResults)[1] ) {
+          numberSavedPlots <- dim(sigResults)[1]
+        }
+        for (i in 1:numberSavedPlots) {
+          ggplot2::ggsave(paste(outRoot, "sig", sigResults[i,6], ".png", sep=""), sigPlots[[i]])
+        }
       }
     }
   }
