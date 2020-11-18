@@ -69,7 +69,7 @@ getStats <- function (df, varOfInterest, covarOfInterest, otherCovarString, lut,
     stop("need varOfInterest assigned to run lm")
   }
   regressionString <- paste("value", '~', varOfInterest, sep=" ")
-  if (!missing(covarOfInterest) & !is.na(covarOfInterest)) {
+  if (!missing(covarOfInterest) & !is.na(covarOfInterest) & covarOfInterest != "" ) {
     regressionString <- paste(regressionString, "+" , covarOfInterest, sep = " ")
   }
   if (!missing(otherCovarString) & !is.na(otherCovarString)) {
